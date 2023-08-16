@@ -1,21 +1,22 @@
-import {getDatasetByTitleName, getDatasetByKeyword, convertDatasetToDistributionId} from "../metastore.js";
+import {getDatasetByKeyword, convertDatasetToDistributionId} from "../metastore.js";
 import {getDatastoreQuerySql} from "../sql.js";
 import {getAllData, plot, plotifyData} from "./plot.js";
 import {endpointStore} from "../httpMethods.js";
+import {getDatastoreImport} from "../datastore.js";
 
 endpointStore.setItem("NadacUpdate", Date.now());
-let nadacDatasets;
-let nadacDistributions;
+let distributions;
 let ndcObjMap;
 await preImport();
 
 async function getAllNdcObjs() {
+    await updateNadac();
     const ndcs = new Map();
-    for (let i = 0; i < nadacDistributions.length; i += 4){
-        if (i >= nadacDistributions.length){
+    for (let i = 0; i < distributions.length; i += 4){
+        if (i >= distributions.length){
             break;
         }
-        const response = await getDatastoreQuerySql(`[SELECT ndc,ndc_description FROM ${nadacDistributions[i]}]`);
+        const response = await getDatastoreQuerySql(`[SELECT ndc,ndc_description FROM ${distributions[i]}]`);
         response.forEach(ndcObj => {
             if (!ndcs.has(ndcObj["ndc_description"])){
                 ndcs.set(ndcObj["ndc_description"], new Set());
@@ -23,7 +24,6 @@ async function getAllNdcObjs() {
             ndcs.get(ndcObj["ndc_description"]).add(ndcObj["ndc"]);
         })
     }
-    await updateNadac();
     return ndcs;
 }
 
@@ -51,8 +51,8 @@ async function getMedNames(medicine){
 }
 
 async function getMedData(items, filter = "ndc", dataVariables = ["as_of_date", "nadac_per_unit"]){
-    const rawData = await getAllData(items, filter, nadacDistributions, dataVariables);
     await updateNadac();
+    const rawData = await getAllData(items, filter, distributions, dataVariables);
     return rawData.flat()
 }
 
@@ -80,26 +80,23 @@ async function plotNadacMed(meds, layout, div, axis){
     return plot(data, layout, "line", div);
 }
 
-async function preImport(){
-    let datasets = (await getDatasetByKeyword("nadac")).filter(r => r.title.includes("(National Average Drug Acquisition Cost)"))
-    nadacDatasets = datasets.sort((a, b) => a.title.localeCompare(b.title))
-    nadacDistributions = await Promise.all(nadacDatasets.map(r => {return convertDatasetToDistributionId(r.identifier)}));
+async function getNadacInfo(){
+    return getDatastoreImport(distributions[distributions.length - 1]);
 }
 
-async function updateNadac(){
-    if (Date.now() - await endpointStore.getItem("NadacUpdate") > 3600000){
-        const latestNadacId  = nadacDatasets[0].identifier;
-        await endpointStore.removeItem(`metastore/schemas/dataset/items/${latestNadacId}`)
-        await endpointStore.removeItem("metastore/schemas/dataset/items");
-        await endpointStore.removeItem("metastore/schemas/distribution/items");
+async function preImport(){
+    let datasets = (await getDatasetByKeyword("nadac")).filter(r => r.title.includes("(National Average Drug Acquisition Cost)"))
+    datasets = datasets.sort((a, b) => a.title.localeCompare(b.title))
+    distributions = await Promise.all(datasets.map(r => {return convertDatasetToDistributionId(r.identifier)}));
+    await endpointStore.removeItem(`metastore/schemas/dataset/items/${datasets[datasets.length - 1].identifier}`)
+    await endpointStore.removeItem("metastore/schemas/distribution/items");
+}
+
+async function updateNadac() {
+    if (Date.now() - await endpointStore.getItem("NadacUpdate") > 3600000) {
         await endpointStore.setItem("NadacUpdate", Date.now());
         await preImport();
     }
-
-async function getNadacVars(datasetTitle) {
-    let dataset = await getDatasetByTitleName(datasetTitle);
-    let nadacDistribution = await convertDatasetToDistributionId(dataset.identifier);
-    return Object.keys((await sdk.getDatastoreQuerySql(`[SELECT * FROM ${nadacDistribution}][LIMIT 1]`))['0']);
 }
 
 export {
@@ -108,13 +105,10 @@ export {
     getNdcFromMed,
     getMedNames,
     getAllNdcObjs,
-    parseSelectedMeds,
-    filterSelectedMeds,
-    getNadacVars,
+    getNadacInfo,
     //data collection
     getMedData,
     //plotting
     plotNadacNdc,
     plotNadacMed
 }
-

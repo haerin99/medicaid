@@ -51,6 +51,7 @@ import {
     getNdcFromMed,
     getMedNames,
     getMedData,
+    getNadacInfo,
     plotNadacNdc,
     plotNadacMed
 } from "./sdk/plot/nadac.js"
@@ -59,6 +60,7 @@ import {
     getQualityMeasures,
     getRateDefinitions,
     getStates,
+    getHealthcareMeasuresInfo,
     plotRateBar,
     plotRateTimeSeries
 } from "./sdk/plot/healthcareMeasures.js"
@@ -68,11 +70,12 @@ import {
     getUtilDataTimeSeries,
     getDrugUtilDataBar,
     getUtilMapData,
+    getUtilInfo,
     plotUtilTimeSeries,
     plotDrugUtilBar,
     plotUtilMap,
-    // getDrugUtilDataXX,
-    // plotDrugUtilDataXX
+    getDrugUtilDataXX,
+    plotDrugUtilDataXX
 } from "./sdk/plot/drugUtilization.js"
 
 import {
@@ -83,10 +86,18 @@ import {
 
 import {
     getAllDiseases,
-    diseaseToDrugs,
-    getDrugRxcui,
-    convertRxcuiToNdcs
+    getNDCsFromRxcui,
+    getRxcuiFromNdc,
+    getDiseaseIdMap,
+    getRxcuiFromDisease,
+    getDrugsFromDisease,
+    getNdcsFromDisease,
+    getRxcuiProperties
 } from "./sdk/rxNorm.js"
+
+import {
+    getDrugContext
+} from "./sdk/fda.js";
 
 export {
     endpointStore,
@@ -134,6 +145,7 @@ export {
     getNadacMeds,
     getNdcFromMed,
     getMedNames,
+    getNadacInfo,
     plotNadacNdc,
     plotNadacMed,
     getMedData,
@@ -141,6 +153,7 @@ export {
     getQualityMeasures,
     getRateDefinitions,
     getStates,
+    getHealthcareMeasuresInfo,
     plotRateBar,
     plotRateTimeSeries,
     //drug utilization
@@ -148,16 +161,23 @@ export {
     getUtilDataTimeSeries,
     getDrugUtilDataBar,
     getUtilMapData,
+    getUtilInfo,
     plotUtilTimeSeries,
     plotDrugUtilBar,
     plotUtilMap,
-    // getDrugUtilDataXX,
-    // plotDrugUtilDataXX,
+    getDrugUtilDataXX,
+    plotDrugUtilDataXX,
     //rxNorm
     getAllDiseases,
-    diseaseToDrugs,
-    getDrugRxcui,
-    convertRxcuiToNdcs
+    getNDCsFromRxcui,
+    getRxcuiFromNdc,
+    getDiseaseIdMap,
+    getRxcuiFromDisease,
+    getDrugsFromDisease,
+    getNdcsFromDisease,
+    getRxcuiProperties,
+    //fda
+    getDrugContext
 }
 
 //initialize localforage
